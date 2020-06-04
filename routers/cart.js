@@ -20,6 +20,8 @@ router.post("/add", (req, res) => {
     }
   }
   //如果用户没有登录
+//console.log(req.session)
+
   let uid = req.session.loginUid;
   let lid = obj.lid;
   let buyCount = obj.buyCount;
@@ -43,7 +45,7 @@ router.post("/add", (req, res) => {
       sql2 = `INSERT INTO xz_shoppingcart_item VALUES(NULL, ${uid}, ${lid}, ${buyCount}, false)`;
     }
 
-    console.log(sql2);
+    //console.log(sql2);
 
     pool.query(sql2, (err, result2) => {
       if (err) throw err;
@@ -69,8 +71,8 @@ router.get("/list", (req, res) => {
   }
   let user = { id: req.session.loginUid }; //
   //1.3执行SQL语句
-  let sql = `SELECT a.iid,a.product_id as lid ,b.title,b.spec, b.price,a.count,'' as pic 
-                FROM xz_shoppingcart_item a INNER JOIN xz_laptop b ON a.product_id = b.lid 
+  let sql = `SELECT a.iid,a.product_id as lid ,b.title,b.spec, b.price,a.count,'' as pic
+                FROM xz_shoppingcart_item a INNER JOIN xz_laptop b ON a.product_id = b.lid
                 WHERE a.user_id = ? `;
   pool.query(sql, [user.id], (err, result) => {
     if (err) {
@@ -120,15 +122,17 @@ router.get("/delete", (req, res) => {
     return;
   }
   //1.3执行SQL语句
-  let sql = "DELETE FROM xz_shoppingcart_item WHERE iid =?";
-  pool.query(sql, [cart.iid], (err, result) => {
+  let sql = `DELETE FROM xz_shoppingcart_item WHERE iid in ( ${cart.iid} )`;
+
+  pool.query(sql, (err, result) => {
     if (err) {
       res.send({
         code: 201,
         msg: `delete failed, err: ${err}`,
       }); //throw err;
       return;
-    }    
+    }
+
     //数据库操作影响的记录行数
     if (result.affectedRows > 0) {
       res.send({ code: 200, msg: `delete success： iid=${cart.iid}` });
@@ -140,7 +144,7 @@ router.get("/delete", (req, res) => {
 
 //===============================================
 //4.修改购物车条目中的购买数量 GET /updatecount
-router.get("/updatecount", (req, res) => {  
+router.get("/updatecount", (req, res) => {
   //1.1获取数据
   let cart = req.query;
   //1.2验证各项数据是否为空
@@ -164,7 +168,7 @@ router.get("/updatecount", (req, res) => {
     if (err) {
       retJson = { code: 201, msg: `update failed, errMessage: ${err}` };
     } //throw err;
-    
+
     //如果数据更改成功，响应对象
     if (result.affectedRows > 0) {
       retJson = { code: 200, msg: "update success" };
@@ -222,8 +226,8 @@ router.get("/listchecked", (req, res) => {
   //1.2参数:无(获取当前用户的所有记录)
   let user = { id: 0 }; //临时测试用
   //1.3执行SQL语句
-  let sql = `SELECT a.iid,a.product_id as lid ,b.title,b.spec, b.price,a.count,'' as pic 
-                  FROM xz_shoppingcart_item a INNER JOIN xz_laptop b ON a.product_id = b.lid 
+  let sql = `SELECT a.iid,a.product_id as lid ,b.title,b.spec, b.price,a.count,'' as pic
+                  FROM xz_shoppingcart_item a INNER JOIN xz_laptop b ON a.product_id = b.lid
                   WHERE a.is_checked=1 AND a.user_id = ? `;
   pool.query(sql, [user.id], (err, result) => {
     if (err) {
@@ -244,7 +248,7 @@ router.get("/listchecked", (req, res) => {
           "SELECT md FROM xz_laptop_pic WHERE laptop_id=? LIMIT 0,1",
           [lid],
           (err, result) => {
-            if (result.length>0)              
+            if (result.length>0)
               retJson.data[i].pic = result[0].md;
           }
         );

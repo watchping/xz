@@ -33,16 +33,16 @@ router.post("/register", (req, res) => {
     if (err) {
       res.send({ code: 201, msg: `register failed", err: ${err}` }); //throw err;
       return;
-    }    
+    }
     //如果数据插入成功，响应对象
     if (result.affectedRows > 0) {
       res.send({ code: 200, msg: "register success" });
-    } 
+    }
   });
 });
 //===============================================
 //2.登录用户 POST /login
-router.post("/login", (req, res) => {  
+router.post("/login", (req, res) => {
   //1.1获取数据
   let user = req.body;
   //1.2验证各项数据是否为空
@@ -58,16 +58,18 @@ router.post("/login", (req, res) => {
   let sql = "SELECT * FROM xz_user WHERE uname = ? AND upwd = ?";
   pool.query(sql, [user.uname, user.upwd], (err, result) => {
     if (err) throw err;
-    //判断查询的结果（数组）长度是否大于0,如果大于0，说明查询到数据，有这个用户登录成功    
+    //判断查询的结果（数组）长度是否大于0,如果大于0，说明查询到数据，有这个用户登录成功
     if (result.length > 0) {
     //登陆成功后将用户uname和uid保存在session中
       req.session.loginUname=user.uname;
       req.session.loginUid=result[0].uid;
       // //登陆成功后将用户和密码写入Cookie，maxAge为cookie过期时间
-      // //res.cookie("user",{"uname":user.uname,"upwd":user.upwd},{maxAge:1000*60*60,httpOnly:true}); 
-      // res.cookie("uname","dingding",{maxAge:260*60}); 
+      // //res.cookie("user",{"uname":user.uname,"upwd":user.upwd},{maxAge:1000*60*60,httpOnly:true});
+      // res.cookie("uname","dingding",{maxAge:260*60});
       // //服务器端session保存登陆的会话状态
-      // //req.session.user=user.uname; 
+      // //req.session.user=user.uname;
+      //console.log(req.session)
+
       res.send({ code: 200, msg: "login success" });
     } else {
       res.send({ code: 301, msg: "login failed：uname or upwd is error" });
@@ -76,7 +78,7 @@ router.post("/login", (req, res) => {
 });
 
 //3.检索用户 GET /detail
-router.get("/detail", (req, res) => {  
+router.get("/detail", (req, res) => {
   //1.1获取get请求的数据
   let user = req.query;
   //1.2验证各项数据是否为空
@@ -130,7 +132,7 @@ router.post("/update", (req, res) => {
         code: 201,
         msg: `update failed, err: ${err}`,
       }); //throw err;
-    
+
     //如果数据更改成功，响应对象
     if (result.affectedRows > 0) {
       res.send({
@@ -154,8 +156,8 @@ router.get("/list", (req, res) => {
   //1.1获取数据
   //1.2如果页码pno为空 默认为1 如果pageSize大小为空默认是2  要保证pageSize大小为整数
   //处理页码
-  let pno = parseInt(req.query.pno);  
-  pno = pno ? pno :1;   
+  let pno = parseInt(req.query.pno);
+  pno = pno ? pno :1;
   //处理每页大小
   let pageSize = parseInt(req.query.pageSize);
   pageSize = pageSize ? pageSize :2;
@@ -171,10 +173,10 @@ router.get("/list", (req, res) => {
         code: 301,
         msg: `list failed, err: ${err}`,
       }); //throw err;
-    
+
     let count = result[0][0]['Count'];//获取记录总数，第1个SQL执行结果
     let pageCount = Math.floor(count/pageSize) + 1;  //计算总页数
-    //如果数据获取成功（记录数量是0也是一种成功），响应对象    
+    //如果数据获取成功（记录数量是0也是一种成功），响应对象
     res.send({
       code: 200,
       msg: "list ok",
@@ -191,7 +193,7 @@ router.get("/list", (req, res) => {
 router.get("/delete", (req, res) => {
   console.log(req.query);
   //1.1获取数据
-  let user = req.query;  
+  let user = req.query;
   //1.2验证数据
   if(!user.uid){
     res.send({ code: 401, msg: "uid required" });
@@ -211,15 +213,15 @@ router.get("/delete", (req, res) => {
     if(result.affectedRows>0){
       res.send({
         code: 200,
-        msg: `delete success ：uid=${user.uid}`, 
+        msg: `delete success ：uid=${user.uid}`,
       })
     }else{
       res.send({
         code: 301,
-        msg: `delete error ： uid=${user.uid}`, 
+        msg: `delete error ： uid=${user.uid}`,
       })
     }
-  }) 
+  })
 });
 
 //===============================================
@@ -227,7 +229,7 @@ router.get("/delete", (req, res) => {
 router.get("/checkemail", (req, res) => {
   console.log(req.query);
   //1.1获取数据
-  let user = req.query;  
+  let user = req.query;
   //1.2验证数据
   if(!user.email){
     res.send({ code: 401, msg: "email required" });
@@ -240,20 +242,20 @@ router.get("/checkemail", (req, res) => {
       res.send({code: 301,msg: `select failed, err: ${err}`}); //throw err;
       return;
     }
-    
+
     //数据库操作影响的记录行数
     if(result.length>0){
       res.send({
         code: 201,
-        msg: `email exists  email=${user.email}`, 
+        msg: `email exists  email=${user.email}`,
       })
     }else{
       res.send({
         code: 200,
-        msg: `checkemail ok email=${user.email}`, 
-      })      
+        msg: `checkemail ok email=${user.email}`,
+      })
     }
-  }) 
+  })
 });
 
 //===============================================
@@ -261,7 +263,7 @@ router.get("/checkemail", (req, res) => {
 router.get("/checkphone", (req, res) => {
   console.log(req.query);
   //1.1获取数据
-  let user = req.query;  
+  let user = req.query;
   //1.2验证数据
   if(!user.phone){
     res.send({ code: 401, msg: "phone required" });
@@ -274,7 +276,7 @@ router.get("/checkphone", (req, res) => {
       res.send({code: 301,msg: `select failed, err: ${err}`}); //throw err;
       return;
     }
-    
+
     //数据库操作影响的记录行数
     if(result.length>0){
       res.send({
@@ -285,9 +287,9 @@ router.get("/checkphone", (req, res) => {
       res.send({
         code: 200,
         msg: `checkphone ok phone=${user.phone}`
-      })      
+      })
     }
-  }) 
+  })
 });
 
 //===============================================
@@ -295,7 +297,7 @@ router.get("/checkphone", (req, res) => {
 router.get("/checkuname", (req, res) => {
   console.log(req.query);
   //1.1获取数据
-  let user = req.query;  
+  let user = req.query;
   //1.2验证数据
   if(!user.uname){
     res.send({ code: 401, msg: "uname required" });
@@ -306,7 +308,7 @@ router.get("/checkuname", (req, res) => {
   pool.query(sql, [user.uname], (err, result) => {
     if (err){
       // throw err;
-      res.send({code: 301,msg: `select failed, errMessage: ${err}`}); 
+      res.send({code: 301,msg: `select failed, errMessage: ${err}`});
       return;
     }
     //console.log(result);
@@ -320,21 +322,21 @@ router.get("/checkuname", (req, res) => {
       res.send({
         code: 200,
         msg: `checkuname ok uname=${user.uname}`
-      })      
+      })
     }
-  }) 
+  })
 });
 
 //===============================================
 //10.退出登录 GET /logout
 router.get("/logout", (req, res) => {
    req.session.destroy();
-   res.send({ code: 200, msg: "logout success" });  
+   res.send({ code: 200, msg: "logout success" });
 });
 
 //===============================================
 //11.获取当前用户信息接口 GET /sessiondata
-router.get("/sessiondata", (req, res) => { 
+router.get("/sessiondata", (req, res) => {
    res.send({
     "code": 200,
     "msg": "success",
@@ -342,7 +344,7 @@ router.get("/sessiondata", (req, res) => {
         "uid":req.session.loginUid,
         "uname":req.session.loginUname
     }
-  });  
+  });
 });
 
 

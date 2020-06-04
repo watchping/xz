@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "..\\..\\Web-Vue\\vue-course(达内课程资料)\\day05\\学子商城素材\\xzserver"
+		},
+		{
+			"path": "..\\..\\Web-Vue\\vue-course\\xzvue"
+		}
+	],
+	"settings": {
+		"liveServer.settings.port": 5501
+	}
+}

@@ -2,37 +2,62 @@
 const express = require("express");
 //引入连接池
 const pool = require("../pool.js");
-
+const query = require("../query");
 //创建空路由器
 let router = express.Router();
 //挂载路由
 //===============================================
 //1.商品列表 GET /list
-router.get("/list", (req, res) => {  
+router.get("/list", (req, res) => {
+
+  if (!req.session.loginUid) {
+    res.send({ code: 300, msg: "login required" });
+    return;
+  }
+
   //1.1获取数据
-  //1.2如果页码pno为空 默认为1 如果pageSize大小为空默认是2  要保证pageSize大小为整数
+  let kw = req.query.kw || "";
+  //"mac i5 128g"
+  let kws = kw.split(" ");
+  //[mac,i5,128g]
+  kws.forEach((elem, i, arr) => {
+    arr[i] = `title like '%${elem}%'`;
+  });
+  /*[
+    title like '%mac%',
+    title like '%i5%',
+    title like '%128g%'
+  ]*/
+  //join(" and ");
+  let where = kws.join(" and ");
+  //console.log(where)
+  //1.2如果页码pno为空 默认为1 如果pageSize大小为空默认是9  要保证pageSize大小为整数
   //验证页码
   let pno = parseInt(req.query.pno);
   pno = pno ? pno : 1;
   //验证每页大小
   let pageSize = parseInt(req.query.pageSize);
-  pageSize = pageSize ? pageSize : 2;
+  pageSize = pageSize ? pageSize : 9;
   //1.3计算开始查询的值start
   let start = (pno - 1) * pageSize;
 
+  //console.log(req.session)
+
   //1.4执行SQL语句 注意是2个SQL语句
-  let sql = `SELECT count(*) as Count FROM xz_laptop; 
-    SELECT a.lid,a.title,a.price,a.sold_count,a.is_onsale,b.md as pic FROM xz_laptop a 
-    INNER JOIN (select laptop_id, max(md) md from xz_laptop_pic GROUP BY laptop_id) b 
-    ON a.lid = b.laptop_id  LIMIT ?,?`;    
+  // let sql = `SELECT count(*) as Count FROM xz_laptop;
+  //   SELECT a.lid,a.title,a.price,a.sold_count,a.is_onsale,b.md as pic FROM xz_laptop a
+  //   INNER JOIN (select laptop_id, max(md) md from xz_laptop_pic GROUP BY laptop_id) b
+  //   ON a.lid = b.laptop_id  LIMIT ?,?`;
+  let sql = `SELECT count(*) as count FROM xz_laptop WHERE ${where};
+      SELECT lid,title,price,sold_count,is_onsale,(SELECT md FROM xz_laptop_pic WHERE laptop_id = lid limit 1) as pic FROM xz_laptop WHERE ${where} LIMIT ?,?`;
   //执行SQL语句，响应查询到的数据
   pool.query(sql, [start, pageSize], (err, result) => {
     if (err) {
       res.send({ code: 301, msg: `list failed, errMessage: ${err}` }); //throw err;
       return;
-    }   
-    let recordCount = result[0][0]["Count"]; //获取记录总数，第1个SQL语句的执行结果
-    let pageCount = Math.floor(recordCount / pageSize) + 1; //计算总页数    
+    }
+    let recordCount = result[0][0]["count"]; //获取记录总数，第1个SQL语句的执行结果
+    let pageCount = Math.floor(recordCount / pageSize) + 1; //计算总页数
     //如果数据获取成功（记录数量是0也是一种成功），响应对象
     let retJson={
         code: 200,
@@ -40,15 +65,44 @@ router.get("/list", (req, res) => {
         recordCount:recordCount,
         pageSize:pageSize,
         pageCount:pageCount,
-        pno:pno, 
+        pno:pno,
         data:result[1],//第2个SQL语句的执行结果
     };
-    res.send(retJson); 
+
+
+
+    res.send(retJson);
   });
 });
 
 //2.商品详情 GET /detail
-router.get("/detail", (req, res) => {  
+router.get("/detail", (req, res) => {
+  let lid = req.query.lid;
+  let retJson = {};
+  let sql = "SELECT * FROM `xz_laptop` WHERE lid=?";
+  query(sql, [lid])
+    .then((result) => {
+      retJson.product = result[0];
+      let fid = retJson.product.family_id;
+      let sql = "SELECT spec,lid FROM `xz_laptop` where family_id=?";
+      //要想继续用then，必须返回Promise对象
+      return query(sql, [fid]); //return Promise
+    })
+    .then((result) => {
+      retJson.specs = result;
+      let sql = "SELECT * FROM `xz_laptop_pic` where laptop_id=?";
+      return query(sql, [lid]);
+    })
+    .then((result) => {
+      retJson.pics = result;
+      res.send(retJson);
+    })
+    //err(error)->catch(error=>{...})
+    .catch((error) => console.log(error));
+});
+
+//
+router.get("/detail2", (req, res) => {
   //1.1获取数据
   let product = req.query;
   //1.2验证各项数据是否为空
@@ -104,7 +158,7 @@ router.get("/delete", (req, res) => {
       }); //throw err;
       return;
     }
-    
+
     //判断数据库操作影响的记录行数
     if (result.affectedRows > 0) {
       res.send({ code: 200, msg: `delete success ：lid=${product.lid}` });
@@ -116,7 +170,7 @@ router.get("/delete", (req, res) => {
 
 //===============================================
 //4.商品添加 POST /add
-router.post("/add", (req, res) => {  
+router.post("/add", (req, res) => {
   //1.1获取数据
   let product = req.body;
   //1.2验证各项数据是否为空
@@ -131,12 +185,12 @@ router.post("/add", (req, res) => {
   }
   //1.3执行SQL语句
   let sql = "INSERT INTO xz_laptop SET ?";
-  pool.query(sql, [product], (err, result) => {    
+  pool.query(sql, [product], (err, result) => {
     if (err) {
       res.send({ code: 301, msg: `add failed, err: ${err}`}); //throw err;
       return;
     }
-    
+
     //如果数据插入成功，响应对象
     if (result.affectedRows > 0) {
       res.send({ code: 200, msg: `add success：id=${result.insertId}` });
@@ -146,6 +200,62 @@ router.post("/add", (req, res) => {
   });
 });
 //===============================================
+//5.商品查询 GET /search  該接口功能歸到list接口了 代码实现思路可以参考学习
+
+router.get("/search", (req, res) => {
+  let retJson={
+    code: 200,
+    msg: "search ok",
+    recordCount:0,
+    pageSize:9,
+    pageCount:0,
+    pno:req.query.pno || 0,
+    data:[],//
+  };
+
+
+  // let output = {
+  //   count: 0,
+  //   pageSize: 9,
+  //   pageCount: 0,
+  //   pno: req.query.pno || 0,
+  //   data: [],
+  // };
+  let kw = req.query.kw || "";
+  //"mac i5 128g"
+  let kws = kw.split(" ");
+  //[mac,i5,128g]
+
+  kws.forEach((elem, i, arr) => {
+    arr[i] = `title like '%${elem}%'`;
+  });
+
+  /*[
+    title like '%mac%',
+    title like '%i5%',
+    title like '%128g%'
+  ]*/
+  //join(" and ");
+  let where = kws.join(" and ");
+  //"title like '%mac%' and title like '%i5%' and title like '%128g%'"
+  var sql = `select *,(select md from xz_laptop_pic where laptop_id=lid limit 1) as md from xz_laptop where ${where}`;
+  console.log(sql);
+  query(sql, [])
+    .then((result) => {
+      retJson.count = result.length;
+      retJson.pageCount = Math.ceil(retJson.count / retJson.pageSize);
+      sql += ` limit ?,?`;
+      return query(sql, [retJson.pageSize * retJson.pno, retJson.pageSize]);
+    })
+    .then((result) => {
+      retJson.data = result;
+      res.send(retJson);
+    });
+});
+
+
+
+
+//==================================================
 //导出路由器
 module.exports = router;
-

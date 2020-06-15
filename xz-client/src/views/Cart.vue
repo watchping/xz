@@ -13,26 +13,26 @@
         label="商品"
         width="400">
         <template slot-scope="scope">
-         <el-row>
-           <el-col :span="8">
-             <el-image
-               style="width: 100px; height: 100px"
-               :src=scope.row.pic
-               fit="fit"></el-image>
-           </el-col>
-           <el-col :span="16">
-             <el-row>
-               <el-col :span="24">
-                 {{scope.row.title}}
-               </el-col>
-             </el-row>
-             <el-row>
-               <el-col :span="24">
-                 {{scope.row.spec}}
-               </el-col>
-             </el-row>
-           </el-col>
-         </el-row>
+          <el-row>
+            <el-col :span="8">
+              <el-image
+                style="width: 100px; height: 100px"
+                :src=scope.row.pic
+                fit="fit"></el-image>
+            </el-col>
+            <el-col :span="16">
+              <el-row>
+                <el-col :span="24">
+                  {{scope.row.title}}
+                </el-col>
+              </el-row>
+              <el-row>
+                <el-col :span="24">
+                  {{scope.row.spec}}
+                </el-col>
+              </el-row>
+            </el-col>
+          </el-row>
         </template>
       </el-table-column>
       <el-table-column label="单价" width="180" prop="price"></el-table-column>
@@ -72,16 +72,18 @@
           url: 'http://localhost:5050/cart/list',
         })
           .then(function (response) {
-            var newList = [];
-            for (var i = 0; i < response.data.data.length; i++) {
-              var item = response.data.data[i];
-              item.pic = "http://localhost:5050/" + item.pic;
-              item.amount = item.price * item.count;
-              newList.push(item);
+            if (response.status === 200) {
+              if (response.data.code === 200) {
+                var newList = [];
+                for (var i = 0; i < response.data.data.length; i++) {
+                  var item = response.data.data[i];
+                  item.pic = "http://localhost:5050/" + item.pic;
+                  item.amount = item.price * item.count;
+                  newList.push(item);
+                }
+                that.tableData = newList;
+              }
             }
-
-            console.log(newList)
-            that.tableData = newList;
           })
           .catch(function (error) {
             console.log(error);
@@ -103,14 +105,17 @@
           }
         })
           .then(function (response) {
-            console.log(response)
-            that.load()
+            if (response.status === 200) {
+              if (response.data.code === 200) {
+                that.load()
+              }
+            }
           })
           .catch(function (error) {
             console.log(error);
           });
       },
-      clear(){
+      clear() {
         var that = this;
         var ids = [];
         for (let i = 0; i < this.tableData.length; i++) {
@@ -124,8 +129,11 @@
           }
         })
           .then(function (response) {
-            console.log(response)
-            that.load()
+            if (response.status === 200) {
+              if (response.data.code === 200) {
+                that.load()
+              }
+            }
           })
           .catch(function (error) {
             console.log(error);

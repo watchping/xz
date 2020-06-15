@@ -1,14 +1,19 @@
 <template>
   <div>
     <el-row>
-      <el-col :span="6" v-for="(product) in productList" :key="product.lid">
+      <el-col>
+        <el-button type="primary" icon="el-icon-shopping-cart-1" @click="showCart">购物车</el-button>
+      </el-col>
+    </el-row>
+    <el-row v-for="(colList, index) in productList" :key="index">
+      <el-col :span="6" v-for="(colItem) in colList" :key="colItem.lid">
         <el-card body-style="{ padding: '20px' }">
-          <img :src=product.pic
+          <img :src=colItem.pic
                class="image">
           <div style="padding: 14px;">
-            <span>{{product.title}}</span>
+            <span>{{colItem.title}}</span>
             <div class="bottom clearfix">
-              <el-button type="text" class="button" @click="addCart(product)">加入购物车</el-button>
+              <el-button type="text" class="button" @click="addCart(colItem)">加入购物车</el-button>
             </div>
           </div>
         </el-card>
@@ -63,6 +68,9 @@
       this.load();
     },
     methods: {
+      showCart() {
+        this.$router.push({path: 'cart'});
+      },
       load() {
         var that = this;
         this.axios({
@@ -75,14 +83,20 @@
           }
         })
           .then(function (response) {
-            that.page.recordCount = response.data.recordCount;
-            var newList = [];
-            for (let i = 0; i < response.data.data.length; i++) {
-              var product = response.data.data[i];
-              product.pic = "http://localhost:5050/" + product.pic;
-              newList.push(product);
+            if (response.status === 200) {
+              if (response.data.code === 200) {
+                that.page.recordCount = response.data.recordCount;
+                var newList = [];
+                for (let i = 0; i < response.data.data.length; i++) {
+                  var product = response.data.data[i];
+                  product.pic = "http://localhost:5050/" + product.pic;
+                  newList.push(product);
+                }
+
+                var length = newList.length;
+                that.productList = newList;
+              }
             }
-            that.productList = newList;
           })
           .catch(function (error) {
             console.log(error)
@@ -103,8 +117,14 @@
           buyCount: 1
         })
           .then(function (response) {
-            console.log("success")
-            console.log(response)
+            if (response.status === 200) {
+              if (response.data.code === 200) {
+                that.$message({
+                  message: '添加购物车成功！',
+                  type: 'success'
+                });
+              }
+            }
           })
           .catch(function (error) {
             console.log(error)

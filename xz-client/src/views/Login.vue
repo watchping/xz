@@ -44,8 +44,11 @@
           }
         })
           .then(function (response) {
-            console.log(response);
-            that.$router.push({ path: 'product' });
+            if (response.status === 200) {
+              if (response.data.code === 200) {
+                that.$router.push({path: 'product'});
+              }
+            }
           })
           .catch(function (error) {
             console.log(error);

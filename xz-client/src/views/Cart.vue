@@ -3,7 +3,6 @@
     <el-table
       ref="multipleTable"
       :data="tableData"
-      style="width: 100%"
       @selection-change="handleSelectionChange">
       <el-table-column
         type="selection"
@@ -48,7 +47,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-button type="primary" icon="el-icon-delete" @click="clear">清空购物车</el-button>
+    <el-button type="warning"  icon="el-icon-delete" @click="clear" style="margin-top: 1rem; float: right">清空购物车</el-button>
   </div>
 </template>
 <script>

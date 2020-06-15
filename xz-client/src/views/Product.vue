@@ -1,19 +1,23 @@
 <template>
   <div>
     <el-row>
-      <el-col>
-        <el-button type="primary" icon="el-icon-shopping-cart-1" @click="showCart">购物车</el-button>
+      <el-col style="margin-bottom: 1rem">
+        <el-button size="small" type="primary" icon="el-icon-shopping-cart-1" @click="showCart">购物车</el-button>
       </el-col>
     </el-row>
-    <el-row v-for="(colList, index) in productList" :key="index">
-      <el-col :span="6" v-for="(colItem) in colList" :key="colItem.lid">
+    <el-row>
+      <el-col :span="6" v-for="(product) in productList" :key="product.lid" style="padding: .5rem">
         <el-card body-style="{ padding: '20px' }">
-          <img :src=colItem.pic
+          <img :src=product.pic
                class="image">
-          <div style="padding: 14px;">
-            <span>{{colItem.title}}</span>
+          <div >
+            <span style="font-size: .6rem">{{product.title}}</span>
             <div class="bottom clearfix">
-              <el-button type="text" class="button" @click="addCart(colItem)">加入购物车</el-button>
+              <div class="time" style="position: relative">
+                <div style="text-align: left; font-size: .5rem">单价：￥ {{ product.price }}</div>
+                <div style="text-align: left; font-size: .5rem">已出售： {{ product.sold_count }}</div>
+                <el-button style="position: absolute; right: 0; top:5px" type="text" class="button" @click="addCart(product)">加入购物车</el-button>
+              </div>
             </div>
           </div>
         </el-card>
@@ -24,7 +28,8 @@
       @current-change="handleCurrentChange"
       :page-sizes="[10, 20, 30, 40]"
       layout="sizes, prev, pager, next"
-      :total=page.recordCount>
+      :total=page.recordCount
+    style="margin-top: .5rem">
     </el-pagination>
   </div>
 </template>
@@ -92,9 +97,8 @@
                   product.pic = "http://localhost:5050/" + product.pic;
                   newList.push(product);
                 }
-
-                var length = newList.length;
                 that.productList = newList;
+                console.log(that.productLis);
               }
             }
           })

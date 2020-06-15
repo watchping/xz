@@ -3,7 +3,35 @@
     <router-view />
   </div>
 </template>
-
+<script>
+  import { getLocalStorage } from "@/utils/utils";
+  export default {
+    components: {
+    },
+    computed:{
+    },
+    data() {
+      return {
+      };
+    },
+    mounted() {
+      this.sessionCheck();
+    },
+    methods: {
+      sessionCheck(){
+        setInterval(() => {
+          var username = getLocalStorage('username');
+          if(username == null && this.$route.name != 'Login'){
+            alert('登录失效，请重新登录！');
+            this.$router.push({path: 'login'});
+          }
+        }, 1000);
+      }
+    },
+    destroyed(){
+    },
+  };
+</script>
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;

@@ -13,6 +13,12 @@ File Encoding         : 65001
 Date: 2020-04-30 19:13:54
 */
 
+SET NAMES UTF8;
+DROP DATABASE IF EXISTS xz;
+CREATE DATABASE xz CHARSET=UTF8;
+USE xz;
+
+
 SET FOREIGN_KEY_CHECKS=0;
 
 -- ----------------------------
